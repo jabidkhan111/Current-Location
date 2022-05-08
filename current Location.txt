@@ -1,0 +1,75 @@
+package com.jksurajpuriya.currentlocation;
+
+
+public class MainActivity extends AppCompatActivity {
+
+    ActivityMainBinding binding;
+    FusedLocationProviderClient fusedLocationProviderClient;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        binding=ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+		
+		
+		// Current Location dependencies
+		implementation 'com.google.android.gms:play-services-location:19.0.1'
+	
+	
+		// user permission in manifest file
+		<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+		<uses-permission android:name="android.permission.INTERNET"/>
+		<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+		<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+
+
+
+        fusedLocationProviderClient= LocationServices.getFusedLocationProviderClient(this);
+
+        binding.search.setOnClickListener(v -> {
+            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED){
+
+                showLocation();
+            }
+
+            else{
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},1);
+
+            }
+        });
+    }
+
+    @SuppressLint("MissingPermission")
+    private void showLocation() {
+        fusedLocationProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+            @Override
+            public void onComplete(@NonNull Task<Location> task) {
+
+                Location location=task.getResult();
+                if (location!=null){
+                    Geocoder geocoder=new Geocoder(MainActivity.this, Locale.getDefault());
+                    try {
+                        List<Address> addressList =geocoder.getFromLocation(location.getLatitude(),
+                                location.getLongitude(),1);
+								
+                        binding.lattitude.setText("Lattitude  "+addressList.get(0).getLatitude());
+                        binding.longitude.setText("Longitude  "+  addressList.get(0).getLongitude());
+                        binding.addressLine.setText(addressList.get(0).getAddressLine(0));
+                        binding.locality.setText(addressList.get(0).getLocality());
+                        binding.country.setText(addressList.get(0).getCountryName());
+                        binding.village.setText(addressList.get(0).getSubLocality());
+
+                    }catch (IOException e){
+                        e.printStackTrace();
+                    }
+                }
+                else {
+                    Toast.makeText(MainActivity.this, "Location null", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+    }
+}
